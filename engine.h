@@ -27,6 +27,8 @@ extern "C" {
 #endif /* __cplusplus */
   #include "market.h"
 
+  
+  float average(float arr[], int n);
   int montecarlo(Market *market);
   int printJapaneseCandle(Market *market);
   
