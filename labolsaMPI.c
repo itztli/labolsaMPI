@@ -1,4 +1,5 @@
 #include "labolsaMPI.h"
+#include <stdio.h>
 #include "order.h"
 
 OrderMPI createOrderMPI_buy(void *stock_reference,
