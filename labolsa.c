@@ -135,7 +135,7 @@ int main(int argn, char **argv){
 	  //the user have enough money to make a transaction.
 	  if (askOrderBuy(market->users[j], market->stocks[i])){
 	    //createrOrder_buy(market, &market->stocks[i], &market->users[j]);
-	    orderMPI = createrOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+	    orderMPI = createOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
 	    order.stock = orderMPI.stock_reference; // &market->stocks[i];
 	    order.user = orderMPI.market_reference; //&market->users[j];
 	    order.typeOrder = orderMPI.typeOrder; //1
