@@ -19,56 +19,40 @@
 VERSION Beta (10/22/2024)
 **/
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef LABOLSAMPI_H
+#define LABOLSA_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#define MAX_SIZE 512
-  // Maximum number of elements in the map (stocks by user)
+#include "market.h"
 
-  typedef struct{
-    int index;
-    float money; //total money of the user
-    float money_in_orders; //money compromised in orders
-    int size; // Current number of elements in the map 
-    char keys[MAX_SIZE][32]; // Array to store the keys (stock codes) 
-    int values[MAX_SIZE]; // Array to store the values 
-  }User;
-
-  
-  
   typedef struct{    
-    Stock *stock;
-    User *user;
+    void *stock_reference;
+    void *market_reference;
+    void *user_reference;
     int n_actions; //number of actions in the transaction.
     int typeOrder; //0:sell 1:buy -1:not enough memory
     float ask; //sell
     float bid; //buy
-  }Order;
-
-   typedef struct{
-    char name[8];
-    int nstocks; // Maximum stocks
-    int nusers;  // Maximum users
-    int norders_buy; // Maximum number of orders
-    int norders_sell;
-    int index_stock; //total stocks
-    int index_user; // total user
-    int index_order_buy; //total of orders by iteration
-    int index_order_sell; //total of orders by iteration
-    Stock *stocks;
-    User *users;
-    Order *orders_buy;
-    Order *orders_sell;
-  }Market;
+    int stock_begin_flag;
+    float money;
+    float money_in_orders;
+  }OrderMPI;
 
 
-  
+
+  OrderMPI createOrderMPI_buy(void *stock_reference,
+			    void *market_reference,
+			      void *user_reference,
+			    int market_index_order_buy,
+			    int market_norders_buy,
+			    float stock_price,
+			      float user_money);
+    
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* COMMON_H */
+#endif /* LABOLSAMPI_H */

@@ -23,7 +23,9 @@ float randomFloatInRange(float a, float b) {
     return a + scale * (b - a);
 }
 
+  
 Order createrOrder_buy(Market *market,Stock *stock, User *user){
+  
   Order order;
   float risk;
   if (market->index_order_buy < market->norders_buy){

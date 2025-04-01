@@ -30,6 +30,7 @@ VERSION Beta (10/22/2024)
 #include "engine.h"
 #include "order.h"
 #include "common.h"
+#include "labolsaMPI.h"
 
 // NOTE: The user not update the price of the order after the first execution. We need to create a new function to ask to the user if wants to update price after each execution ends.
 
@@ -50,7 +51,8 @@ int main(int argn, char **argv){
   int n_actions,actual_stock;
   float ask,bid;
   int n_buy, n_sell,n_exe;
-
+  Order order;
+  OrderMPI orderMPI;
   
   MPI_Init(&argn, &argv); /* Inicializar MPI */
   MPI_Comm_rank(MPI_COMM_WORLD,&miproc); /* Determinar el rango del proceso invocado*/
@@ -118,7 +120,8 @@ int main(int argn, char **argv){
       printf("#%i:",i);
       
       //montecarlo(market);
-      
+
+      //***************************** BEGIN ************************************
       n_buy=0;
       n_sell=0;
       n_exe=0;
@@ -131,7 +134,21 @@ int main(int argn, char **argv){
 	  //if (price <= market->users[j].money){
 	  //the user have enough money to make a transaction.
 	  if (askOrderBuy(market->users[j], market->stocks[i])){
-	    createrOrder_buy(market, &market->stocks[i], &market->users[j]);
+	    //createrOrder_buy(market, &market->stocks[i], &market->users[j]);
+	    orderMPI = createrOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+	    order.stock = orderMPI.stock_reference; // &market->stocks[i];
+	    order.user = orderMPI.market_reference; //&market->users[j];
+	    order.typeOrder = orderMPI.typeOrder; //1
+	    order.bid = orderMPI.bid;
+	    order.n_actions = orderMPI.n_actions;
+	    order.stock->begin_flag = orderMPI.stock_begin_flag;
+
+	    market->users[j].money -= orderMPI.money;
+	    market->users[j].money_in_orders += orderMPI.money_in_orders;
+
+	    market->orders_buy[market->index_order_buy] = order;
+	    market->index_order_buy++;
+	    
 	    n_buy++;
       }else 
 	    //printf("INFO: User=%i code=%s\n",j,market->stocks[i].code);
@@ -249,7 +266,7 @@ int main(int argn, char **argv){
       //delete all the transactions for 0:
       orders_trash_collector(market);
       
-      
+      //******************************* END ************************************      
       
       
       

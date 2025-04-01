@@ -25,7 +25,7 @@ VERSION Beta (10/22/2024)
 #include "market.h"
 #include "order.h"
 #include "user.h"
-#include <mpi.h>
+//#include <mpi.h>
 
 float average(float arr[], int n) {
     float sum = 0.0;
