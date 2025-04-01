@@ -41,6 +41,9 @@ extern "C" {
   double randomValue(double a, double b);  
 
   int orders_trash_collector(Market *market);
+
+  float randomFloatInRange(float a, float b);
+
   
 #ifdef __cplusplus
 } /* extern "C" */
