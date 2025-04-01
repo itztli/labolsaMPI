@@ -29,9 +29,8 @@ extern "C" {
 #include "market.h"
 
   typedef struct{    
-    void *stock_reference;
-    void *market_reference;
-    void *user_reference;
+    int i;
+    int j;
     int n_actions; //number of actions in the transaction.
     int typeOrder; //0:sell 1:buy -1:not enough memory
     float ask; //sell
@@ -43,9 +42,8 @@ extern "C" {
 
 
 
-  OrderMPI createOrderMPI_buy(void *stock_reference,
-			    void *market_reference,
-			      void *user_reference,
+  OrderMPI createOrderMPI_buy(int i,
+			     int j,
 			    int market_index_order_buy,
 			    int market_norders_buy,
 			    float stock_price,

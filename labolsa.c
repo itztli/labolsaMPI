@@ -135,12 +135,20 @@ int main(int argn, char **argv){
 	  //the user have enough money to make a transaction.
 	  if (askOrderBuy(market->users[j], market->stocks[i])){
 	    //createrOrder_buy(market, &market->stocks[i], &market->users[j]);
-	    orderMPI = createOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+	    //orderMPI = createOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+	    // i == stocks
+	    // j == users
+	    orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+	    //Fixing memory bug
 	    //order.stock = orderMPI.stock_reference; // &market->stocks[i];
 	    //order.user = orderMPI.market_reference; //&market->users[j];
 
-	    order.stock =  &market->stocks[i];
-	    order.user = &market->users[j];
+	    order.stock = &market->stocks[orderMPI.i]; // &market->stocks[i];
+	    order.user = &market->users[orderMPI.j]; //&market->users[j];
+
+	    //WORKS!!!
+	    //order.stock =  &market->stocks[i];
+	    //order.user = &market->users[j];
 
 
 	    order.typeOrder = orderMPI.typeOrder; //1
@@ -148,8 +156,8 @@ int main(int argn, char **argv){
 	    order.n_actions = orderMPI.n_actions;
 	    order.stock->begin_flag = orderMPI.stock_begin_flag;
 
-	    market->users[j].money -= orderMPI.money;
-	    market->users[j].money_in_orders += orderMPI.money_in_orders;
+	    market->users[orderMPI.j].money -= orderMPI.money;
+	    market->users[orderMPI.j].money_in_orders += orderMPI.money_in_orders;
 
 	    market->orders_buy[market->index_order_buy] = order;
 	    market->index_order_buy++;

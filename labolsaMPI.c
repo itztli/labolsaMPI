@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include "order.h"
 
-OrderMPI createOrderMPI_buy(void *stock_reference,
-			    void *market_reference,
-			    void *user_reference,
+OrderMPI createOrderMPI_buy(int i,
+			    int j,
 			    int market_index_order_buy,
 			    int market_norders_buy,
 			    float stock_price,
@@ -12,10 +11,8 @@ OrderMPI createOrderMPI_buy(void *stock_reference,
   OrderMPI orderMPI;
   float risk;
   if (market_index_order_buy < market_norders_buy){
-
-    orderMPI.stock_reference = stock_reference;
-    orderMPI.market_reference = market_reference;
-    orderMPI.user_reference = user_reference;
+    orderMPI.i = i;
+    orderMPI.j = j;
   //necesitamos una funcion que de valores entre 0.02 y - 0.05)
   risk = randomFloatInRange(-0.05, 0.02);
   ////////order.stock = stock;
