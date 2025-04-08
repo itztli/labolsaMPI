@@ -31,6 +31,9 @@ extern "C" {
   typedef struct{    
     int i;
     int j;
+    int index_order_buy;
+    int norders_buy;
+    float price;
     int n_actions; //number of actions in the transaction.
     int typeOrder; //0:sell 1:buy -1:not enough memory
     float ask; //sell

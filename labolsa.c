@@ -59,6 +59,8 @@ int main(int argn, char **argv){
   MPI_Comm_size(MPI_COMM_WORLD,&numproc); /* Determinar el numero de procesos */
   MPI_Barrier (MPI_COMM_WORLD);
 
+
+
   if (miproc == 0){ //master 
   
   //printf("%i\n",argn);
@@ -74,6 +76,42 @@ int main(int argn, char **argv){
     printf("#Labolsa simulator ver 20241022_1902\n");
     printf("# GNU/GPL License\n");
     printf("# By: Victor De la Luz <vdelaluz@enesmorelia.unam.mx>\n");
+  }
+
+  MPI_Barrier (MPI_COMM_WORLD);
+  
+if (miproc != 0) { // slaves
+    //int flag_start = 1;
+    double F = 0.0; //result
+    data = 1;
+    range.F = 0.0;
+    int flag_start = 1;
+    //MPI_Send(&mp, sizeof(mp), MPI_CHARACTER, n_proc, 98, MPI_COMM_WORLD);
+
+    orderMPI.flag_start=flag_start; //first time flag_star==1
+
+    
+    while(1){
+      //MPI_Send(&data, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD); 
+      //MPI_Recv(&data, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, &status);
+
+      MPI_Send(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD);
+      MPI_Recv(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, &status);
+      //integral de Riemman                                   
+      //printf("%i\t%llu\t%i\n",miproc,data, f(data));
+
+      orderMPI = createOrderMPI_buy(orderMPI.i,orderMPI.j, orderMPI.index_order_buy, orderMPI.norders_buy,orderMPI.price,orderMPI.money);
+      //orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+
+
+      //integral de Riemman
+      //printf("%i\t%llu\t%i\n",miproc,data, f(data));
+      //range.F = F;
+      //printf("%i:[%lf,%lf] dx=%lf F=%lf\n",miproc,range.a,range.b,range.dx,range.F);
+      //Parallel processing
+    }
+
+ }else{  //Master
     // Creating stocks
     printf("#Generating %i stock... ",M);
     for(i=0; i < M; i++){
@@ -134,11 +172,39 @@ int main(int argn, char **argv){
 	  //if (price <= market->users[j].money){
 	  //the user have enough money to make a transaction.
 	  if (askOrderBuy(market->users[j], market->stocks[i])){
-	    //createrOrder_buy(market, &market->stocks[i], &market->users[j]);
-	    //orderMPI = createOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
-	    // i == stocks
-	    // j == users
-	    orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+
+
+
+
+
+
+//Master                                                                                                                       
+    int flag = -1;
+    MPI_Request request;
+    double sum = 0;
+    int n=0;
+    int i,j;
+    int no_deal;
+    i = 0;
+    j = 0;
+    no_deal=0;
+    srand(1);
+    
+    price = market->stocks[0].price;
+
+    while (1) {
+      if(flag != 0){
+        MPI_Irecv(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+        flag = 0;
+	n++;
+      }
+      MPI_Test(&request, &flag, &status);
+      if (flag != 0) {
+
+        if (orderMPI.flag_start == 1){
+		  orderMPI.flag_start = 0;
+		}else{
+	  //output processing
 	    //Fixing memory bug
 	    //order.stock = orderMPI.stock_reference; // &market->stocks[i];
 	    //order.user = orderMPI.market_reference; //&market->users[j];
@@ -163,6 +229,113 @@ int main(int argn, char **argv){
 	    market->index_order_buy++;
 	    
 	    n_buy++;
+	  
+	  // printf("%i\t%i\t%i\t%i\t%lf\t%lf\n",sum ,mp.miproc,mp.x,mp.y,mp.nu/1e9,C_light*C_light*mp.I_nu/(2.0*K*mp.nu*mp.nu));
+	  
+		}
+
+
+
+	
+        if (status.MPI_SOURCE != -1){
+          // sending information                                                                                                        
+          // segmentar la informacion para enviarla al nodo disponible                                                                  
+
+          //printf("%i: %lf\n",status.MPI_SOURCE,range.F);                                                                              
+          //data = rand64();
+	    //orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+
+	  if (askOrderBuy(market->users[j], market->stocks[i])){
+	    orderMPI.i = i;
+	    orderMPI.j = j;
+	    orderMPI.index_order_buy = market->index_order_buy;
+	    orderMPI.norders_buy = market->norders_buy;
+	    orderMPI.price = market->stocks[i].price; 
+	    orderMPI.money = market->users[j].money;
+	    MPI_Send(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
+	  }else{
+	    no_deal++;
+	  }
+	  
+	    j++;
+	    if (j == market->index_user){
+	      j = 0;
+	      i++;
+	      price = market->stocks[i].price;
+	    }
+
+	    if (i == market->index_stock){
+	      break;
+	    }	    
+        }
+
+        flag = -1;
+      }
+
+      //stop condition                                                                                                                  
+      //if ((a+n*dx) >= b){                                                                                                             
+      if (n == ((market->index_stock*market->index_user) -no_deal)){
+        printf("Ready!\n");
+	break;
+      }
+    } //while(1)   
+
+
+
+
+
+
+	    
+
+	    
+	    //createrOrder_buy(market, &market->stocks[i], &market->users[j]);
+	    //orderMPI = createOrderMPI_buy(&market->stocks[i], market, &market->users[j], market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+	    // i == stocks
+	    // j == users
+
+ 
+	    //data_send.i = i;
+	    //data_send.j = j;
+	    //data_send.index_order_buy = market->index_order_buy;
+	    //data_send.norders_buy = market->norders_buy;
+	    //data_send.price =  
+	    //MPI_Send(&data_send, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD);
+	    //MPI_Recv(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, &status);
+      //integral de Riemman                                   
+      //printf("%i\t%llu\t%i\n",miproc,data, f(data));
+ 
+
+	    //orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+
+
+
+
+
+
+////	    //Fixing memory bug
+////	    //order.stock = orderMPI.stock_reference; // &market->stocks[i];
+////	    //order.user = orderMPI.market_reference; //&market->users[j];
+////
+////	    order.stock = &market->stocks[orderMPI.i]; // &market->stocks[i];
+////	    order.user = &market->users[orderMPI.j]; //&market->users[j];
+////
+////	    //WORKS!!!
+////	    //order.stock =  &market->stocks[i];
+////	    //order.user = &market->users[j];
+////
+////
+////	    order.typeOrder = orderMPI.typeOrder; //1
+////	    order.bid = orderMPI.bid;
+////	    order.n_actions = orderMPI.n_actions;
+////	    order.stock->begin_flag = orderMPI.stock_begin_flag;
+////
+////	    market->users[orderMPI.j].money -= orderMPI.money;
+////	    market->users[orderMPI.j].money_in_orders += orderMPI.money_in_orders;
+////
+////	    market->orders_buy[market->index_order_buy] = order;
+////	    market->index_order_buy++;
+////	    
+////	    n_buy++;
       }else 
 	    //printf("INFO: User=%i code=%s\n",j,market->stocks[i].code);
 	    if (askOrderSell(market->users[j], market->stocks[i])){
@@ -306,8 +479,10 @@ int main(int argn, char **argv){
     print_help();
   }
 
-  }
+  } //Master END!
 
-  MPI_Finalize (); 
+  MPI_Abort(MPI_COMM_WORLD,MPI_SUCCESS);
+
+  //MPI_Finalize (); 
   return 0;
 }
