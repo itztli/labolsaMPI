@@ -475,9 +475,9 @@ if (miproc != 0) { // slaves
     //free(user);
     //free(stock);
     closeMarket(market);
-  }else{
-    print_help();
-  }
+    //}else{
+    // print_help();
+    //}
 
   } //Master END!
 
