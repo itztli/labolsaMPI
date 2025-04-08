@@ -76,11 +76,15 @@ int main(int argn, char **argv){
     printf("#Labolsa simulator ver 20241022_1902\n");
     printf("# GNU/GPL License\n");
     printf("# By: Victor De la Luz <vdelaluz@enesmorelia.unam.mx>\n");
+  }else{
+    print_help();
+    exit(0);
   }
+
 
   MPI_Barrier (MPI_COMM_WORLD);
   
-if (miproc != 0) { // slaves
+  if (miproc != 0) { // slaves
     //int flag_start = 1;
     //double F = 0.0; //result
     //data = 1;
@@ -111,7 +115,7 @@ if (miproc != 0) { // slaves
       //Parallel processing
     }
 
- }else{  //Master
+  }else{  //Master
     // Creating stocks
     printf("#Generating %i stock... ",M);
     for(i=0; i < M; i++){
@@ -166,13 +170,16 @@ if (miproc != 0) { // slaves
       //CREATING BUY/SELL ORDERS
       printf("#Creating NEW orders (old %i/%i):\n",market->index_order_buy,market->index_order_sell);  
       //printf("INFO: index_stock=%i\n",market->index_stock);
-      for(int i=0; i < market->index_stock; i++){
-	price = market->stocks[i].price;
-	for(int j=0; j < market->index_user;j++){
-	  //if (price <= market->users[j].money){
-	  //the user have enough money to make a transaction.
-	  if (askOrderBuy(market->users[j], market->stocks[i])){
 
+
+
+////      for(int i=0; i < market->index_stock; i++){
+////	price = market->stocks[i].price;
+////	for(int j=0; j < market->index_user;j++){
+////	  //if (price <= market->users[j].money){
+////	  //the user have enough money to make a transaction.
+////	  if (askOrderBuy(market->users[j], market->stocks[i])){
+////
 
 
 
@@ -232,7 +239,7 @@ if (miproc != 0) { // slaves
 	  
 	  // printf("%i\t%i\t%i\t%i\t%lf\t%lf\n",sum ,mp.miproc,mp.x,mp.y,mp.nu/1e9,C_light*C_light*mp.I_nu/(2.0*K*mp.nu*mp.nu));
 	  
-		}
+	}
 
 
 
@@ -336,16 +343,16 @@ if (miproc != 0) { // slaves
 ////	    market->index_order_buy++;
 ////	    
 ////	    n_buy++;
-      }else 
-	    //printf("INFO: User=%i code=%s\n",j,market->stocks[i].code);
-	    if (askOrderSell(market->users[j], market->stocks[i])){
+    }else if (askOrderSell(market->users[j], market->stocks[i])){
+	    //printf("INFO: User=%i code=%s\n",j,market->stocks[i].code);      
 	      //printf("INFO: User %i wants to sell!\n",j);
 	      createrOrder_sell(market, &market->stocks[i], &market->users[j]);
 	      n_sell++;
 	    }
 	  //}
-	} //j
-      } //i
+    ////	} //j
+    ////  } //i
+  
       printf("#Order created!");
       //  printOrders(market);
       printf("#Buy Orders:%i\tSell Orders:%i.\n",n_buy,n_sell);
@@ -475,9 +482,7 @@ if (miproc != 0) { // slaves
     //free(user);
     //free(stock);
     closeMarket(market);
-    //}else{
-    // print_help();
-    //}
+
 
   } //Master END!
 
