@@ -82,9 +82,9 @@ int main(int argn, char **argv){
   
 if (miproc != 0) { // slaves
     //int flag_start = 1;
-    double F = 0.0; //result
-    data = 1;
-    range.F = 0.0;
+    //double F = 0.0; //result
+    //data = 1;
+    //range.F = 0.0;
     int flag_start = 1;
     //MPI_Send(&mp, sizeof(mp), MPI_CHARACTER, n_proc, 98, MPI_COMM_WORLD);
 
