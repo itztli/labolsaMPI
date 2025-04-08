@@ -41,6 +41,7 @@ extern "C" {
     int stock_begin_flag;
     float money;
     float money_in_orders;
+    int flag_start;
   }OrderMPI;
 
 
