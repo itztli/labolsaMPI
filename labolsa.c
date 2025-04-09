@@ -53,13 +53,17 @@ int main(int argn, char **argv){
   int n_buy, n_sell,n_exe;
   Order order;
   OrderMPI orderMPI;
+
+  MPI_Datatype MPI_ORDER;
+
   
   MPI_Init(&argn, &argv); /* Inicializar MPI */
   MPI_Comm_rank(MPI_COMM_WORLD,&miproc); /* Determinar el rango del proceso invocado*/
   MPI_Comm_size(MPI_COMM_WORLD,&numproc); /* Determinar el numero de procesos */
   MPI_Barrier (MPI_COMM_WORLD);
-  
-  
+
+  MPI_ORDER = create_OrderMPI_type();
+
   
 	if (miproc == 0){ //master 
     	//printf("%i\n",argn);
@@ -72,49 +76,14 @@ int main(int argn, char **argv){
 		//user = malloc(sizeof(User)*N);
 		//stock = malloc(sizeof(Stock)*M);
 		printf("%i\n",M);    
-		printf("#Labolsa simulator ver 20241022_1902\n");
+		printf("#LabolsaMPI simulator ver 20250409_1125\n");
 		printf("# GNU/GPL License\n");
 		printf("# By: Victor De la Luz <vdelaluz@enesmorelia.unam.mx>\n");
 		}else{
 		print_help();
 		exit(0);
 		}
-	}
-    
-    MPI_Barrier (MPI_COMM_WORLD);
-  
-		if (miproc != 0) { // slaves
-			//int flag_start = 1;
-			//double F = 0.0; //result
-			//data = 1;
-			//range.F = 0.0;
-			int flag_start = 1;
-			//MPI_Send(&mp, sizeof(mp), MPI_CHARACTER, n_proc, 98, MPI_COMM_WORLD);
-		
-			orderMPI.flag_start=flag_start; //first time flag_star==1
-		
-		
-			while(1){
-				//MPI_Send(&data, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD); 
-				//MPI_Recv(&data, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, &status);
-		
-				MPI_Send(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD);
-				MPI_Recv(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, &status);
-				//integral de Riemman                                   
-				//printf("%i\t%llu\t%i\n",miproc,data, f(data));
-		
-				orderMPI = createOrderMPI_buy(orderMPI.i,orderMPI.j, orderMPI.index_order_buy, orderMPI.norders_buy,orderMPI.price,orderMPI.money);
-				//orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
-		
-		
-				//integral de Riemman
-				//printf("%i\t%llu\t%i\n",miproc,data, f(data));
-				//range.F = F;
-				//printf("%i:[%lf,%lf] dx=%lf F=%lf\n",miproc,range.a,range.b,range.dx,range.F);
-				//Parallel processing
-			}
-		
-		}else{  //Master
+
 			// Creating stocks
 			printf("#Generating %i stock... ",M);
 			for(i=0; i < M; i++){
@@ -155,10 +124,58 @@ int main(int argn, char **argv){
 			printf("#IOPs iterations: %i\n",k);
 			//print_divergence(market);
 			//printMarket(market);
+
+
+	}
+    
+    MPI_Barrier (MPI_COMM_WORLD);
+    
+		if (miproc != 0) { // slaves
+			//int flag_start = 1;
+			//double F = 0.0; //result
+			//data = 1;
+			//range.F = 0.0;
+			int flag_start = 1;
+			//MPI_Send(&mp, sizeof(mp), MPI_CHARACTER, n_proc, 98, MPI_COMM_WORLD);
+			printf("Preparing slave %i\n",miproc);
+
+			//BUG?
+			////orderMPI.flag_start=flag_start; //first time flag_star==1		
 		
-			printf("#Running Montecarlo...\n");
-			for(int i=0; i < 1000; i++){
-				printf("#%i:",i);
+			while(1){
+				//MPI_Send(&data, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD); 
+				//MPI_Recv(&data, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, &status);
+			  printf("%i: Sending result...\n",miproc);
+				MPI_Send(&orderMPI, 1, MPI_ORDER, 0, 0, MPI_COMM_WORLD);
+				printf("%i: OK...\n",miproc);
+				printf("%i: Receiving new dataset...\n",miproc);
+				MPI_Recv(&orderMPI, 1, MPI_ORDER, 0, 0, MPI_COMM_WORLD, &status);
+				printf("%i: OK_R...\n",miproc);
+				//integral de Riemman                                   
+				//printf("%i\t%llu\t%i\n",miproc,data, f(data));
+				printf("%i: Computing order...\n",miproc);
+				orderMPI = createOrderMPI_buy(orderMPI.i,orderMPI.j, orderMPI.index_order_buy, orderMPI.norders_buy,orderMPI.price,orderMPI.money);
+				//orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
+				printf("%i: OK_C...\n",miproc);
+		
+				//integral de Riemman
+				//printf("%i\t%llu\t%i\n",miproc,data, f(data));
+				//range.F = F;
+				//printf("%i:[%lf,%lf] dx=%lf F=%lf\n",miproc,range.a,range.b,range.dx,range.F);
+				//Parallel processing
+			}
+		
+		}else{  //Master
+		       int flag = -1;
+		       MPI_Request request;
+		       double sum = 0;
+		       int n=0;
+		       int i,j;
+		       int no_deal;
+		       
+		       printf("%i: Running Montecarlo...\n",miproc);
+			for(int i_monte=0; i_monte < 1000; i_monte++){
+			  printf("%i:%i iteration\n",miproc,i_monte);
 				//montecarlo(market);
 		
 				//***************************** BEGIN ************************************
@@ -172,12 +189,6 @@ int main(int argn, char **argv){
 				////	price = market->stocks[i].price;
 				////
 				//Master                                                                                                                       
-				int flag = -1;
-				MPI_Request request;
-				double sum = 0;
-				int n=0;
-				int i,j;
-				int no_deal;
 				i = 0;
 				j = 0;
 				no_deal=0;
@@ -187,15 +198,19 @@ int main(int argn, char **argv){
 		
 				while (1) {
 					if(flag != 0){
-						MPI_Irecv(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+					  printf("0: receiving...\n");
+						MPI_Irecv(&orderMPI, 1, MPI_ORDER, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+						printf("0: ok...\n");
 						flag = 0;
 						n++;
 					}
 					MPI_Test(&request, &flag, &status);
 					if (flag != 0) {
-						if (orderMPI.flag_start == 1){
-							orderMPI.flag_start = 0;
-						}else{
+						if (status.MPI_SOURCE != -1){
+					  ////if (orderMPI.flag_start == 1){
+					  ////		orderMPI.flag_start = 0;
+					  ////	}else{
+						  printf("0: Adding new order buy to market...\n");
 							//output processing
 							//Fixing memory bug
 							//order.stock = orderMPI.stock_reference; // &market->stocks[i];
@@ -221,10 +236,11 @@ int main(int argn, char **argv){
 							market->index_order_buy++;
 			
 							n_buy++;
+							printf("0: Adding OK...\n");
 							// printf("%i\t%i\t%i\t%i\t%lf\t%lf\n",sum ,mp.miproc,mp.x,mp.y,mp.nu/1e9,C_light*C_light*mp.I_nu/(2.0*K*mp.nu*mp.nu));			
-						}
+							//}
 			
-						if (status.MPI_SOURCE != -1){
+
 							// sending information                                                                                                        
 							// segmentar la informacion para enviarla al nodo disponible                                                                  
 			
@@ -232,7 +248,7 @@ int main(int argn, char **argv){
 							//data = rand64();
 							//orderMPI = createOrderMPI_buy(i,j, market->index_order_buy, market->norders_buy,market->stocks[i].price,market->users[j].money );
 
-			
+						  printf("0: Asking for buy...\n");
 							if (askOrderBuy(market->users[j], market->stocks[i])){
 								orderMPI.i = i;
 								orderMPI.j = j;
@@ -240,9 +256,13 @@ int main(int argn, char **argv){
 								orderMPI.norders_buy = market->norders_buy;
 								orderMPI.price = market->stocks[i].price; 
 								orderMPI.money = market->users[j].money;
-								MPI_Send(&orderMPI, 1, MPI_UNSIGNED_LONG_LONG, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
+								printf("0: User wants buy, creating order...\n");
+								MPI_Send(&orderMPI, 1, MPI_ORDER, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
+								printf("0: Create new order sent to slave...\n");
 							}else{
+							  printf("0: No deal\n");
 								no_deal++;
+							       
 							}
 			
 							j++;

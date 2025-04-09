@@ -27,7 +27,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include "market.h"
-
+#include <mpi.h>
+  
   typedef struct{    
     int i;
     int j;
@@ -44,6 +45,7 @@ extern "C" {
     int flag_start;
   }OrderMPI;
 
+  MPI_Datatype create_OrderMPI_type();
 
 
   OrderMPI createOrderMPI_buy(int i,
